@@ -2,6 +2,7 @@
 
 import requests
 from bs4 import BeautifulSoup
+
 from init_logger import init_logger
 
 logger = init_logger('logger', 'INFO', 'logger.log')
@@ -26,6 +27,7 @@ def get_pages_count(soup):
 
 
 def collect_all_links(soup):
+
     attempt = 0
     while attempt < 5:
         try:
@@ -45,6 +47,7 @@ def str_to_int(str):
 def parse_info_from_one_car(url, cars):
     soup = get_soup_object(url)
     mark = soup.find('h1', class_='CardHead__title').text
+
     if soup.find("div", {"class": "CardSold__title"}):
         return
     price = str_to_int(soup.find("span", {"class": "OfferPriceCaption__price"}).text)
