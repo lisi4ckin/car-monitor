@@ -3,6 +3,10 @@
 import requests
 from bs4 import BeautifulSoup
 
+from init_logger import init_logger
+
+logger = init_logger('logger', 'INFO', 'logger.log')
+
 BASE_URL = 'https://auto.ru/cars/used/?page={}'
 
 
@@ -14,7 +18,7 @@ def get_soup_object(url):
             soup = BeautifulSoup(page, 'lxml')
             return soup
     except Exception as e:
-        print(e)
+        logger.error(e)
 
 
 def get_pages_count(soup):
@@ -23,9 +27,16 @@ def get_pages_count(soup):
 
 
 def collect_all_links(soup):
-    links = soup.find_all('a', class_='Link ListingItemTitle__link')
-    finish_links = [link['href'] for link in links]
-    return finish_links
+
+    attempt = 0
+    while attempt < 5:
+        try:
+            links = soup.find_all('a', class_='Link ListingItemTitle__link')
+            finish_links = [link['href'] for link in links]
+            return finish_links
+        except Exception as e:
+            logger.error(f"Error while collect all links from page: {e}")
+        attempt += 1
 
 
 def str_to_int(str):
@@ -36,10 +47,13 @@ def str_to_int(str):
 def parse_info_from_one_car(url, cars):
     soup = get_soup_object(url)
     mark = soup.find('h1', class_='CardHead__title').text
+
+    if soup.find("div", {"class": "CardSold__title"}):
+        return
     price = str_to_int(soup.find("span", {"class": "OfferPriceCaption__price"}).text)
     year_of_release = soup.find("a", {"class": "Link Link_color_black"}).text
     mileage = str_to_int(soup.find("li", {"class": "CardInfoRow CardInfoRow_kmAge"}).text)
-    body_type = soup.find("li", {"class": "CardInfoRow CardInfoRow_bodytype"}).text[:5]
+    body_type = soup.find("li", {"class": "CardInfoRow CardInfoRow_bodytype"}).text[5:]
     cars.append({
         "mark": mark,
         "link": url,
