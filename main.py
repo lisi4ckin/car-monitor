@@ -2,10 +2,10 @@
 
 import requests
 from bs4 import BeautifulSoup
-
+from tqdm import tqdm
 from init_logger import init_logger
 
-logger = init_logger('logger', 'INFO', 'logger.log')
+logger = init_logger('logger')
 
 BASE_URL = 'https://auto.ru/cars/used/?page={}'
 
@@ -27,7 +27,6 @@ def get_pages_count(soup):
 
 
 def collect_all_links(soup):
-
     attempt = 0
     while attempt < 5:
         try:
@@ -68,8 +67,11 @@ def parse_info_from_one_car(url, cars):
 
 if __name__ == '__main__':
     soup = get_soup_object(BASE_URL.format(1))
-    links = collect_all_links(soup)  # this function collect all links from page http:://auto.ru
+    pages = get_pages_count(soup)  # collect all pages from http://auto.ru
     cars = []
-    for link in links:
-        parse_info_from_one_car(link, cars)
+    for page in tqdm(range(1, pages)):
+        logger.info(f"Parsing page {page} of {pages}")
+        links = collect_all_links(soup)  # this function collect all links from page http:://auto.ru
+        for link in links:
+            parse_info_from_one_car(link, cars)
     print(cars)
